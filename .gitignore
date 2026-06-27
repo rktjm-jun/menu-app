@@ -1,0 +1,39 @@
+﻿# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+build/
+.out/
+.vite/
+.cache/
+
+# Env files
+.env
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Caches and temp
+.cache/
+.cache-loader/
+.eslintcache
+
+# Local uploads / large assets
+uploads/
+assets/uploads/
+
+# Visual Studio cache
+.vs/

@@ -1,0 +1,612 @@
+﻿/* ============================================================
+   基本設定（色・フォント・ボーダー）
+============================================================ */
+:root {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f3f4f6;
+    --color-background-info: #e0f2fe;
+    --color-background-danger: #fee2e2;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-text-tertiary: #9ca3af;
+    --color-text-info: #0284c7;
+    --color-text-danger: #dc2626;
+    --color-border-tertiary: #e5e7eb;
+    --color-border-secondary: #d1d5db;
+    --color-border-info: #38bdf8;
+    --border-radius-md: 8px;
+    --border-radius-lg: 14px;
+}
+
+/* 全体フォント */
+body {
+    margin: 0;
+    background: var(--color-background-secondary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--color-text-primary);
+}
+
+/* ============================================================
+   外枠（スマホ画面の中央寄せ）
+============================================================ */
+.shell {
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--color-background-primary);
+    height: 100vh;
+    position: relative;
+    overflow: hidden; /* 横スクロール防止 */
+}
+
+/* ============================================================
+   SPA ページ領域（タブバーを除く）
+============================================================ */
+#app {
+    max-width: 480px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 60px; /* タブバーの高さ */
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   SPA ページ（section）
+============================================================ */
+.page {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100%; /* #app の高さにフィット */
+    background: var(--color-background-primary);
+    overflow-y: auto;
+    box-sizing: border-box;
+    transform: translateX(100%); /* 初期状態は右に隠す */
+    transition: transform 0.35s ease;
+}
+
+    .page.active {
+        transform: translateX(0); /* 表示中 */
+    }
+
+/* ============================================================
+   固定タブバー
+============================================================ */
+.tabbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--color-background-primary);
+    border-top: 0.5px solid var(--color-border-tertiary);
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    z-index: 9999;
+}
+
+/* タブバー内のコンテナ */
+.tabbar-inner {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    width: 100%;
+}
+
+/* タブボタン */
+.navitem {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    padding: 6px 0;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+}
+
+/* ============================================================
+   共通 UI パーツ
+============================================================ */
+
+/* フォームラベル */
+.flabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0 0 6px;
+}
+
+/* タグ（必須 / 任意） */
+.tag {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+}
+
+/* 入力欄 */
+.finput {
+    width: 100%;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    padding: 8px 10px;
+    font-size: 13px;
+    background: var(--color-background-primary);
+    box-sizing: border-box;
+}
+
+/* レシピ一覧の行 */
+.rrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+}
+
+/* カレンダー一覧の行 */
+.lrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+}
+
+/* CTA ボタン */
+.cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    border-radius: var(--border-radius-md);
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    box-sizing: border-box;
+}
+
+/* ============================================================
+   カレンダー（月間・一覧）
+============================================================ */
+/* カレンダー内のページはアニメーション無し */
+#calendar-month,
+#calendar-list {
+    transition: none !important;
+}
+
+/* ヘッダー */
+.cm-header,
+.cl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px 8px;
+}
+
+.cm-title,
+.cl-title {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.cm-icon,
+.cl-icon {
+    font-size: 20px;
+    color: var(--color-text-secondary);
+}
+
+/* カレンダー切替タブ */
+.calendar-switch {
+    display: flex;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 3px;
+    margin: 0 16px 10px;
+}
+
+    .calendar-switch button {
+        flex: 1;
+        text-align: center;
+        padding: 7px 0;
+        border-radius: 6px;
+        font-size: 13px;
+        border: none;
+    }
+
+    .calendar-switch .active {
+        background: var(--color-background-primary);
+        font-weight: 500;
+    }
+
+    .calendar-switch .inactive {
+        color: var(--color-text-tertiary);
+    }
+
+/* ------------------------------
+   カレンダー（月間）
+------------------------------ */
+.grid7 {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.daycell {
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 6px;
+    min-height: 46px;
+    padding: 3px 3px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dnum {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.dlabel {
+    font-size: 9px;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   献立を決める（meal-create）
+============================================================ */
+
+/* ヘッダー */
+.meal-create-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+.meal-create-back {
+    font-size: 20px;
+    color: var(--color-text-secondary);
+}
+
+.meal-create-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* 日付表示 */
+.meal-create-date-box {
+    padding: 18px 16px 6px;
+    text-align: center;
+}
+
+.meal-create-date {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* 空状態 */
+.meal-create-empty {
+    padding: 14px 16px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.meal-create-empty-icon {
+    font-size: 30px;
+    color: var(--color-text-tertiary);
+}
+
+.meal-create-empty-text {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+/* ボタンエリア */
+.meal-create-buttons {
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meal-create-btn-select {
+    background: var(--color-background-secondary);
+    color: var(--color-text-primary);
+}
+
+.meal-create-btn-random {
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+}
+
+.meal-create-btn-icon {
+    font-size: 18px;
+}
+
+/* ランダム提案ボックス */
+.meal-create-random-box {
+    margin: 4px 16px 18px;
+    background: var(--color-background-info);
+    border-radius: var(--border-radius-lg);
+    padding: 14px;
+}
+
+.meal-create-random-title {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--color-text-info);
+    font-weight: 500;
+}
+
+/* ランダム提案アイテム */
+.meal-create-random-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    padding: 10px;
+}
+
+.meal-create-random-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.meal-create-random-thumb-icon {
+    font-size: 20px;
+    color: var(--color-text-tertiary);
+}
+
+.meal-create-random-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ランダム提案アクション */
+.meal-create-random-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.meal-create-random-again {
+    flex: 1;
+    font-size: 12px;
+    padding: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.meal-create-random-again-icon {
+    font-size: 14px;
+}
+
+.meal-create-random-decide {
+    flex: 1;
+    font-size: 12px;
+    padding: 9px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border: none;
+    border-radius: var(--border-radius-md);
+}
+
+/* ============================================================
+   レシピ一覧（recipe-list）
+============================================================ */
+
+.recipe-header {
+    padding: 14px 16px 10px;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.recipe-search-box {
+    padding: 0 16px 12px;
+}
+
+.recipe-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 8px 12px;
+}
+
+    .recipe-search i {
+        font-size: 16px;
+        color: var(--color-text-tertiary);
+    }
+
+    .recipe-search span {
+        font-size: 13px;
+        color: var(--color-text-tertiary);
+    }
+
+/* FAB ボタン */
+.fab {
+    position: fixed;
+    right: calc(50% - 240px + 16px);
+    bottom: 80px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-background-info);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================================
+   レシピ登録（recipe-form）
+============================================================ */
+
+/* ヘッダー */
+.recipe-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+.recipe-form-back,
+.recipe-form-check {
+    font-size: 20px;
+    color: var(--color-text-secondary);
+}
+
+.recipe-form-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* 本体 */
+.recipe-form-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* 必須タグ */
+.recipe-form-required {
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+}
+
+/* 任意タグ */
+.recipe-form-optional {
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+}
+
+/* 写真アップロード枠 */
+.recipe-form-photo-box {
+    border: 1px dashed var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-tertiary);
+}
+
+.recipe-form-photo-icon {
+    font-size: 22px;
+}
+
+.recipe-form-photo-text {
+    font-size: 12px;
+}
+
+/* 保存ボタン */
+.recipe-form-submit {
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border: none;
+    border-radius: var(--border-radius-md);
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+/* ============================================================
+   レシピ選択（recipe-select）
+============================================================ */
+
+.recipe-select-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+.recipe-select-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.recipe-select-back {
+    font-size: 20px;
+    color: var(--color-text-secondary);
+}
+
+.recipe-select-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-border-secondary);
+}
+
+.recipe-select-submit-box {
+    padding: 16px;
+}
+
+.recipe-select-submit {
+    width: 100%;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border: none;
+    border-radius: var(--border-radius-md);
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ============================================================
+   家族（family）
+============================================================ */
+
+.family-header {
+    padding: 14px 16px;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.family-body {
+    padding: 16px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}

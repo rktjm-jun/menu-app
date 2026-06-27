@@ -1,0 +1,269 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <title>献立アプリ</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+
+    <div class="shell">
+        <div id="app">
+
+            <!-- ------------------------------
+         カレンダー（月間）
+    ------------------------------ -->
+            <section id="calendar-month" class="page active">
+
+                <header class="cm-header">
+                    <span class="cm-title">献立カレンダー</span>
+                    <i class="ti ti-users cm-icon"></i>
+                </header>
+
+                <div class="calendar-switch">
+                    <button class="active">月間カレンダー</button>
+                    <button class="inactive" onclick="location.hash='#/calendar/list'">一覧</button>
+                </div>
+
+                <div id="calendar-month-container"></div>
+
+            </section>
+
+            <!-- ------------------------------
+         カレンダー（一覧）
+    ------------------------------ -->
+            <section id="calendar-list" class="page">
+
+                <header class="cl-header">
+                    <span class="cl-title">献立カレンダー</span>
+                    <i class="ti ti-users cl-icon"></i>
+                </header>
+
+                <div class="calendar-switch">
+                    <button class="inactive" onclick="location.hash='#/calendar/month'">月間カレンダー</button>
+                    <button class="active">一覧</button>
+                </div>
+
+                <div id="calendar-list-container"></div>
+
+            </section>
+
+            <!-- ------------------------------
+         献立を決める
+    ------------------------------ -->
+            <section id="meal-create" class="page">
+
+                <header class="meal-create-header">
+                    <i class="ti ti-arrow-left meal-create-back" aria-hidden="true"
+                       onclick="location.hash='#/calendar/list'"></i>
+                    <span class="meal-create-title">献立を決める</span>
+                </header>
+
+                <div class="meal-create-date-box">
+                    <span class="meal-create-date">2026年6月26日（金）</span>
+                </div>
+
+                <div class="meal-create-empty">
+                    <i class="ti ti-tools-kitchen-2 meal-create-empty-icon" aria-hidden="true"></i>
+                    <p class="meal-create-empty-text">まだ献立が決まっていません</p>
+                </div>
+
+                <div class="meal-create-buttons">
+                    <button class="cta meal-create-btn-select"
+                            onclick="location.hash='#/recipe/select'">
+                        <i class="ti ti-list meal-create-btn-icon" aria-hidden="true"></i>
+                        レシピ一覧から選ぶ
+                    </button>
+
+                    <button class="cta meal-create-btn-random">
+                        <i class="ti ti-arrows-shuffle meal-create-btn-icon" aria-hidden="true"></i>
+                        ランダム提案で決める
+                    </button>
+                </div>
+
+                <div class="meal-create-random-box">
+                    <p class="meal-create-random-title">ランダム提案の結果</p>
+
+                    <div class="meal-create-random-item">
+                        <div class="meal-create-random-thumb">
+                            <i class="ti ti-tools-kitchen-2 meal-create-random-thumb-icon" aria-hidden="true"></i>
+                        </div>
+                        <span class="meal-create-random-name">野菜炒め</span>
+                    </div>
+
+                    <div class="meal-create-random-actions">
+                        <button class="meal-create-random-again">
+                            <i class="ti ti-refresh meal-create-random-again-icon" aria-hidden="true"></i>
+                            もう一度
+                        </button>
+
+                        <button class="meal-create-random-decide">
+                            この献立に決定
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- ------------------------------
+         レシピ一覧
+    ------------------------------ -->
+            <section id="recipe-list" class="page">
+
+                <header class="recipe-header">レシピ一覧</header>
+
+                <div class="recipe-search-box">
+                    <div class="recipe-search">
+                        <i class="ti ti-search"></i>
+                        <span>料理名で検索</span>
+                    </div>
+                </div>
+
+                <div class="rrow">
+                    <div class="recipe-thumb">
+                        <i class="ti ti-tools-kitchen-2"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <p style="margin:0;font-size:14px;font-weight:500;">鶏の照り焼き</p>
+                        <p style="margin:2px 0 0;font-size:11px;color:var(--color-text-secondary);">材料・作り方あり</p>
+                    </div>
+                    <i class="ti ti-chevron-right" style="font-size:16px;color:var(--color-text-tertiary);"></i>
+                </div>
+
+                <button class="fab" onclick="location.hash='#/recipe/form'">
+                    <i class="ti ti-plus"></i>
+                </button>
+
+            </section>
+
+            <!-- ------------------------------
+         レシピ登録
+    ------------------------------ -->
+            <section id="recipe-form" class="page">
+
+                <header class="recipe-form-header">
+                    <i class="ti ti-arrow-left recipe-form-back" aria-hidden="true"
+                       onclick="location.hash='#/recipe/list'"></i>
+                    <span class="recipe-form-title">レシピを登録</span>
+                    <i class="ti ti-check recipe-form-check" aria-hidden="true"></i>
+                </header>
+
+                <div class="recipe-form-body">
+
+                    <!-- 料理名 -->
+                    <div>
+                        <p class="flabel">
+                            料理名
+                            <span class="tag recipe-form-required">必須</span>
+                        </p>
+                        <input class="finput" placeholder="例: 鶏の照り焼き" />
+                    </div>
+
+                    <!-- 写真 -->
+                    <div>
+                        <p class="flabel">
+                            写真
+                            <span class="tag recipe-form-optional">任意</span>
+                        </p>
+                        <div class="recipe-form-photo-box">
+                            <i class="ti ti-camera recipe-form-photo-icon" aria-hidden="true"></i>
+                            <span class="recipe-form-photo-text">タップして写真を追加</span>
+                        </div>
+                    </div>
+
+                    <!-- 材料 -->
+                    <div>
+                        <p class="flabel">
+                            材料
+                            <span class="tag recipe-form-optional">任意</span>
+                        </p>
+                        <textarea class="finput" rows="3"
+                                  placeholder="例: 鶏もも肉 300g&#10;しょうゆ 大さじ2"></textarea>
+                    </div>
+
+                    <!-- 作り方 -->
+                    <div>
+                        <p class="flabel">
+                            作り方
+                            <span class="tag recipe-form-optional">任意</span>
+                        </p>
+                        <textarea class="finput" rows="3"
+                                  placeholder="例: 1. 鶏肉を一口大に切る&#10;2. 油で焼く"></textarea>
+                    </div>
+
+                    <!-- 保存ボタン -->
+                    <button class="recipe-form-submit">
+                        保存する
+                    </button>
+
+                </div>
+            </section>
+
+
+            <!-- ------------------------------
+         レシピ選択
+    ------------------------------ -->
+            <section id="recipe-select" class="page">
+
+                <header class="recipe-select-header">
+                    <i class="ti ti-arrow-left recipe-select-back" onclick="location.hash='#/meal/create'"></i>
+                    <span class="recipe-select-title">レシピを選択</span>
+                </header>
+
+                <div class="rrow">
+                    <span style="flex:1;font-size:14px;">鶏の照り焼き</span>
+                    <div class="recipe-select-radio"></div>
+                </div>
+
+                <div class="recipe-select-submit-box">
+                    <button class="recipe-select-submit" onclick="location.hash='#/meal/create'">
+                        このレシピに決定
+                    </button>
+                </div>
+
+            </section>
+
+            <!-- ------------------------------
+         家族
+    ------------------------------ -->
+            <section id="family" class="page">
+                <header class="family-header">家族</header>
+                <div class="family-body">
+                    家族管理画面はまだ準備中です。
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ------------------------------
+             固定タブバー
+        ------------------------------ -->
+        <nav class="tabbar">
+            <div class="tabbar-inner">
+                <button class="navitem" onclick="location.hash='#/calendar/month'">
+                    <i class="ti ti-calendar"></i>
+                    カレンダー
+                </button>
+                <button class="navitem" onclick="location.hash='#/recipe/list'">
+                    <i class="ti ti-list"></i>
+                    レシピ
+                </button>
+                <button class="navitem" onclick="location.hash='#/family'">
+                    <i class="ti ti-users"></i>
+                    家族
+                </button>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- JS 読み込み -->
+    <script src="js/router.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

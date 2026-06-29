@@ -6,6 +6,25 @@ function closeMealCreate() {
 }
 
 // ------------------------------
+// グローバル関数：カレンダーから献立作成画面を開く
+// ------------------------------
+window.openMealCreate = function openMealCreate(dateStr) {
+    try {
+        if (dateStr) {
+            sessionStorage.setItem("selectedDate", dateStr);
+            console.log("[openMealCreate] selectedDate set:", dateStr);
+        } else {
+            console.log("[openMealCreate] no date provided");
+        }
+        // クエリは付けずにハッシュだけ切り替える
+        location.hash = "#/meal/create";
+    } catch (err) {
+        console.error("openMealCreate error:", err);
+    }
+};
+
+
+// ------------------------------
 // 献立作成画面：日付の読み込み
 // ------------------------------
 window.addEventListener("hashchange", () => {

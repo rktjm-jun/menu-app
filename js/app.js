@@ -30,16 +30,16 @@ function initRecipeFormPage() {
     const section = document.getElementById("recipe-form");
     if (!section) return;
 
-    // あなたの HTML の .finput の順番に完全対応
+    // .finput の順番に対応
     const inputs = section.querySelectorAll(".finput");
-    const titleInput = inputs[0];        // 料理名
-    const ingredientsInput = inputs[1];  // 材料
-    const instructionsInput = inputs[2]; // 作り方
+    const titleInput = inputs[0];
+    const ingredientsInput = inputs[1];
+    const instructionsInput = inputs[2];
 
     const submitBtn = section.querySelector(".recipe-form-submit");
     if (!submitBtn) return;
 
-    // 既にリスナーが登録されている可能性を避けるため、一度削除してから登録
+    // 既存リスナーをクリアしてから登録（SPA の再初期化対策）
     submitBtn.replaceWith(submitBtn.cloneNode(true));
     const newSubmitBtn = section.querySelector(".recipe-form-submit");
 
@@ -54,7 +54,6 @@ function initRecipeFormPage() {
             return;
         }
 
-        // Supabase に送るデータ（recipes テーブル構造に合わせる）
         const recipe = {
             title,
             description: ingredients,
@@ -71,22 +70,14 @@ function initRecipeFormPage() {
         newSubmitBtn.textContent = "送信中...";
 
         try {
-            const result = await createRecipe(recipe); // api.js 側でログと例外処理を行う
+            const result = await createRecipe(recipe);
 
-            // 成功時にフォームをクリアして一覧へ遷移
             if (Array.isArray(result) && result.length > 0) {
-                const created = result[0];
                 alert("レシピを登録しました！");
                 titleInput.value = "";
                 ingredientsInput.value = "";
                 instructionsInput.value = "";
-
-                // 可能なら作成されたレコードの id を使って遷移（なければ一覧へ）
-                if (created && created.id) {
-                    location.hash = `#/recipe/list`;
-                } else {
-                    location.hash = "#/recipe/list";
-                }
+                location.hash = "#/recipe/list";
             } else {
                 console.error("createRecipe returned no data", result);
                 alert("登録に失敗しました…");
@@ -104,53 +95,114 @@ function initRecipeFormPage() {
 window.initRecipeFormPage = initRecipeFormPage;
 
 // ------------------------------
-// レシピ一覧画面の初期化
+// レシピ一覧画面の初期化（index.html の構造に合わせる）
 // ------------------------------
 function initRecipeListPage() {
     console.log("initRecipeListPage called");
     const section = document.getElementById("recipe-list");
     if (!section) return;
 
-    // ローディング表示
-    section.innerHTML = '<div class="loading">読み込み中…</div>';
+    // ローディング表示（既存 DOM を壊さないように一時的に差し替え）
+    const contentContainer = document.createElement('div');
+    contentContainer.id = 'recipe-list-content';
+    contentContainer.innerHTML = '<div class="loading">読み込み中…</div>';
+
+    // 既存の検索ボックスや FAB を壊さないため、section 内の rrow 等を一旦削除してから追加
+    // ここでは recipe-search-box の直後にリストを挿入する想定
+    const searchBox = section.querySelector('.recipe-search-box');
+    if (searchBox) {
+        // 既に差し込み済みなら置き換えない
+        const existing = section.querySelector('#recipe-list-content');
+        if (existing) existing.remove();
+        searchBox.insertAdjacentElement('afterend', contentContainer);
+    } else {
+        // 無ければセクション末尾に追加
+        section.appendChild(contentContainer);
+    }
 
     (async () => {
         const data = await getRecipes({ limit: 200, orderBy: 'created_at', order: 'desc' });
         if (data === null) {
-            section.innerHTML = '<div class="error">レシピの取得に失敗しました。後でもう一度お試しください。</div>';
+            contentContainer.innerHTML = '<div class="error">レシピの取得に失敗しました。後でもう一度お試しください。</div>';
             return;
         }
 
         if (data.length === 0) {
-            section.innerHTML = '<div class="empty">登録されたレシピがありません。</div>';
+            contentContainer.innerHTML = '<div class="empty">登録されたレシピがありません。</div>';
             return;
         }
 
-        const ul = document.createElement('ul');
-        ul.className = 'recipe-list-ul';
+        // レイアウトは index.html のサンプル（.rrow）に合わせる
+        const fragment = document.createDocumentFragment();
 
         data.forEach(r => {
-            const li = document.createElement('li');
-            li.className = 'recipe-item';
+            const row = document.createElement('div');
+            row.className = 'rrow';
 
-            const thumbHtml = r.thumbnail_url
-                ? `<img src="${escapeHtml(r.thumbnail_url)}" alt="${escapeHtml(r.title)}" class="thumb">`
-                : `<div class="thumb placeholder"></div>`;
+            // サムネイル領域（既存の .recipe-thumb と同様の見た目を想定）
+            const thumbWrap = document.createElement('div');
+            thumbWrap.className = 'recipe-thumb';
+            // safe URL チェック
+            const safeThumbUrl = (r.thumbnail_url && typeof r.thumbnail_url === 'string' && r.thumbnail_url.startsWith('http')) ? r.thumbnail_url : '';
+            if (safeThumbUrl) {
+                const img = document.createElement('img');
+                img.className = 'thumb';
+                img.src = safeThumbUrl;
+                img.alt = r.title || '';
+                img.style.width = '44px';
+                img.style.height = '44px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '6px';
+                thumbWrap.appendChild(img);
+            } else {
+                // 既存のアイコンを使う HTML と同等にするため、空の div（CSS 側でアイコン表示される想定）
+                const icon = document.createElement('i');
+                icon.className = 'ti ti-tools-kitchen-2';
+                thumbWrap.appendChild(icon);
+            }
 
-            li.innerHTML = `
-                <a href="#/recipe/detail/${r.id}" class="recipe-link">
-                    ${thumbHtml}
-                    <div class="meta">
-                        <div class="title">${escapeHtml(r.title)}</div>
-                        <div class="desc">${escapeHtml(r.description || '')}</div>
-                    </div>
-                </a>
-            `;
-            ul.appendChild(li);
+            // テキスト領域
+            const metaWrap = document.createElement('div');
+            metaWrap.style.flex = '1';
+            metaWrap.style.minWidth = '0';
+
+            const titleP = document.createElement('p');
+            titleP.style.margin = '0';
+            titleP.style.fontSize = '14px';
+            titleP.style.fontWeight = '500';
+            titleP.textContent = r.title || '';
+
+            const descP = document.createElement('p');
+            descP.style.margin = '2px 0 0';
+            descP.style.fontSize = '11px';
+            descP.style.color = 'var(--color-text-secondary)';
+            descP.textContent = (r.description || r.instructions) ? '材料・作り方あり' : '';
+
+            metaWrap.appendChild(titleP);
+            metaWrap.appendChild(descP);
+
+            // 右矢印アイコン
+            const chevron = document.createElement('i');
+            chevron.className = 'ti ti-chevron-right';
+            chevron.style.fontSize = '16px';
+            chevron.style.color = 'var(--color-text-tertiary)';
+
+            // クリックで詳細や選択に遷移できるようにする（例: detail ページ）
+            row.addEventListener('click', () => {
+                // detail ページが未実装なら一覧に留まる
+                location.hash = `#/recipe/detail/${r.id || ''}`;
+            });
+
+            row.appendChild(thumbWrap);
+            row.appendChild(metaWrap);
+            row.appendChild(chevron);
+
+            fragment.appendChild(row);
         });
 
-        section.innerHTML = '';
-        section.appendChild(ul);
+        // 差し替え
+        contentContainer.innerHTML = '';
+        contentContainer.appendChild(fragment);
     })();
 }
 

@@ -15,11 +15,6 @@ window.addEventListener("hashchange", () => {
             document.getElementById("meal-date").textContent = d;
         }
     }
-
-    // レシピ登録画面に入ったら初期化
-    if (location.hash === "#/recipe/create") {
-        initRecipeFormPage();
-    }
 });
 
 // ------------------------------

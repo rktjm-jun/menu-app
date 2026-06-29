@@ -7,7 +7,7 @@ const routes = [
     "#/calendar/list",
     "#/meal/create",
     "#/recipe/list",
-    "#/recipe/form",     // ← 修正ポイント：レシピ登録画面
+    "#/recipe/form", 
     "#/recipe/select",
     "#/family"
 ];

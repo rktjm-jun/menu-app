@@ -28,6 +28,7 @@ window.addEventListener("hashchange", () => {
 import { createRecipe } from "./api.js";
 
 function initRecipeFormPage() {
+    console.log("initRecipeFormPage called");
     const section = document.getElementById("recipe-form");
     if (!section) return;
 
@@ -71,3 +72,5 @@ function initRecipeFormPage() {
         }
     });
 }
+
+window.initRecipeFormPage = initRecipeFormPage;

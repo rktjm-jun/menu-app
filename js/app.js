@@ -20,7 +20,7 @@ window.addEventListener("hashchange", () => {
 // ------------------------------
 // レシピ関連：Supabase 連携
 // ------------------------------
-import { createRecipe, getRecipeById, updateRecipe } from "./api.js";
+import { createRecipe, getRecipes, getRecipeById, updateRecipe } from "./api.js";
 
 /**
  * ハッシュのクエリ部分をパースしてオブジェクトで返す

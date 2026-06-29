@@ -20,11 +20,20 @@ window.addEventListener("hashchange", () => {
 // ------------------------------
 // レシピ関連：Supabase 連携
 // ------------------------------
-import { createRecipe, getRecipes } from "./api.js";
+import { createRecipe, getRecipeById, updateRecipe } from "./api.js";
 
-// ------------------------------
-// レシピ登録画面の初期化
-// ------------------------------
+/**
+ * ハッシュのクエリ部分をパースしてオブジェクトで返す
+ * 例: "#/recipe/form?id=7" -> { id: "7" }
+ */
+function parseHashQuery() {
+    const hash = location.hash || "";
+    const qIndex = hash.indexOf("?");
+    if (qIndex === -1) return {};
+    const q = hash.slice(qIndex + 1);
+    return Object.fromEntries(new URLSearchParams(q));
+}
+
 function initRecipeFormPage() {
     console.log("initRecipeFormPage called");
     const section = document.getElementById("recipe-form");
@@ -36,15 +45,55 @@ function initRecipeFormPage() {
     const ingredientsInput = inputs[1];
     const instructionsInput = inputs[2];
 
-    const submitBtn = section.querySelector(".recipe-form-submit");
+    // ヘッダやボタン要素（あれば文言を切替）
+    const headerTitle = section.querySelector(".recipe-form-title");
+    const submitBtnSelector = ".recipe-form-submit";
+
+    // submit ボタン取得と既存リスナーのクリア
+    let submitBtn = section.querySelector(submitBtnSelector);
     if (!submitBtn) return;
-
-    // 既存リスナーをクリアしてから登録（SPA の再初期化対策）
     submitBtn.replaceWith(submitBtn.cloneNode(true));
-    const newSubmitBtn = section.querySelector(".recipe-form-submit");
+    submitBtn = section.querySelector(submitBtnSelector);
 
-    newSubmitBtn.addEventListener("click", async () => {
-        console.log("保存ボタンが押されました");
+    // 編集モード判定（#/recipe/form?id=7 の ?id= を読む）
+    const params = parseHashQuery();
+    const editId = params.id ? String(params.id) : null;
+
+    // 初期フォーム状態のセット
+    if (editId) {
+        if (headerTitle) headerTitle.textContent = "レシピ編集";
+        submitBtn.textContent = "更新する";
+
+        // 非同期で既存データを取得してフォームにセット
+        (async () => {
+            try {
+                const rec = await getRecipeById(editId);
+                if (!rec) {
+                    console.error("レシピ取得に失敗しました:", editId);
+                    alert("レシピの読み込みに失敗しました");
+                    return;
+                }
+                titleInput.value = rec.title || "";
+                ingredientsInput.value = rec.description || "";
+                instructionsInput.value = rec.instructions || "";
+                // 必要なら他フィールドもここでセット
+            } catch (err) {
+                console.error("getRecipeById 例外:", err);
+                alert("レシピの読み込み中にエラーが発生しました");
+            }
+        })();
+    } else {
+        if (headerTitle) headerTitle.textContent = "レシピ登録";
+        submitBtn.textContent = "保存する";
+        // 新規時はフォームを空に
+        titleInput.value = "";
+        ingredientsInput.value = "";
+        instructionsInput.value = "";
+    }
+
+    // クリックハンドラ（新規 or 更新を切替）
+    submitBtn.addEventListener("click", async () => {
+        console.log("保存ボタンが押されました (editId:", editId, ")");
         const title = titleInput.value.trim();
         const ingredients = ingredientsInput.value.trim();
         const instructions = instructionsInput.value.trim();
@@ -54,40 +103,54 @@ function initRecipeFormPage() {
             return;
         }
 
-        const recipe = {
+        // 作成/更新で送るデータを組み立てる
+        const recipePayload = {
             title,
             description: ingredients,
             instructions,
             minutes: 0,
             thumbnail_url: "",
-            created_at: new Date().toISOString(),
         };
-        console.log("送信データ:", recipe);
 
         // 送信中はボタンを無効化して二重送信を防ぐ
-        newSubmitBtn.disabled = true;
-        const originalText = newSubmitBtn.textContent;
-        newSubmitBtn.textContent = "送信中...";
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = editId ? "更新中..." : "送信中...";
 
         try {
-            const result = await createRecipe(recipe);
-
-            if (Array.isArray(result) && result.length > 0) {
-                alert("レシピを登録しました！");
-                titleInput.value = "";
-                ingredientsInput.value = "";
-                instructionsInput.value = "";
-                location.hash = "#/recipe/list";
+            if (editId) {
+                // 更新（PATCH）: created_at は通常更新しない
+                const updated = await updateRecipe(editId, recipePayload);
+                if (Array.isArray(updated) && updated.length > 0) {
+                    alert("レシピを更新しました！");
+                    location.hash = "#/recipe/list";
+                } else {
+                    console.error("updateRecipe returned no data", updated);
+                    alert("更新に失敗しました");
+                }
             } else {
-                console.error("createRecipe returned no data", result);
-                alert("登録に失敗しました…");
+                // 新規作成（POST）
+                // created_at を付けるのはサーバ側でも可。ここでは付けておく。
+                recipePayload.created_at = new Date().toISOString();
+                const result = await createRecipe(recipePayload);
+                if (Array.isArray(result) && result.length > 0) {
+                    alert("レシピを登録しました！");
+                    // フォームをクリアして一覧へ
+                    titleInput.value = "";
+                    ingredientsInput.value = "";
+                    instructionsInput.value = "";
+                    location.hash = "#/recipe/list";
+                } else {
+                    console.error("createRecipe returned no data", result);
+                    alert("登録に失敗しました…");
+                }
             }
         } catch (err) {
-            console.error("レシピ登録中に例外が発生しました:", err);
-            alert("登録中にエラーが発生しました。コンソールのエラーを確認してください。");
+            console.error("保存処理で例外:", err);
+            alert("保存中にエラーが発生しました。コンソールを確認してください。");
         } finally {
-            newSubmitBtn.disabled = false;
-            newSubmitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
     });
 }
@@ -187,10 +250,9 @@ function initRecipeListPage() {
             chevron.style.fontSize = '16px';
             chevron.style.color = 'var(--color-text-tertiary)';
 
-            // クリックで詳細や選択に遷移できるようにする（例: detail ページ）
+            // クリックで編集画面に遷移できるようにする
             row.addEventListener('click', () => {
-                // detail ページが未実装なら一覧に留まる
-                location.hash = `#/recipe/detail/${r.id || ''}`;
+                location.hash = `#/recipe/form?id=${r.id || ''}`;
             });
 
             row.appendChild(thumbWrap);

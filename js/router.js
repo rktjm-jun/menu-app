@@ -15,14 +15,27 @@ const routes = [
 // 初期画面
 let currentPage = null;
 
+// 先頭付近に追加（showPage の上でも下でも可）
+function normalizeHash(hash) {
+    if (!hash) return hash;
+    const q = hash.indexOf("?");
+    return q === -1 ? hash : hash.slice(0, q);
+}
+
 // ページ切り替え処理
 function showPage(hash) {
-    if (!routes.includes(hash)) {
-        hash = "#/calendar/month"; // デフォルト
-        location.hash = hash;
+    // 正規化（クエリを除去）して判定に使う
+    const normalized = normalizeHash(hash);
+
+    if (!routes.includes(normalized)) {
+        const def = "#/calendar/month"; // デフォルト
+        // location.hash を直接書き換えると hashchange が発火するが問題ない
+        location.hash = def;
+        // showPage は呼び出し元の hashchange で再実行されるためここは return しておく
+        return;
     }
 
-    const targetId = hash.replace("#/", "").replace("/", "-");
+    const targetId = normalized.replace("#/", "").replace("/", "-");
     const targetPage = document.getElementById(targetId);
 
     if (!targetPage) return;
@@ -32,7 +45,7 @@ function showPage(hash) {
         targetPage.classList.add("active");
         currentPage = targetPage;
 
-        runPageInit(hash);
+        runPageInit(normalized);
         return;
     }
 
@@ -50,11 +63,11 @@ function showPage(hash) {
         currentPage.classList.remove("leave-left");
         currentPage = targetPage;
 
-        runPageInit(hash);
+        runPageInit(normalized);
     }, 350);
 
     // カレンダー一覧タブに切り替わったら一覧を生成
-    if (hash === "#/calendar/list") renderCalendarList();
+    if (normalized === "#/calendar/list") renderCalendarList();
 }
 
 // ページ固有の初期化処理

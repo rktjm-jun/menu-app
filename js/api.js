@@ -90,6 +90,59 @@ export async function getRecipes({ limit = 100, orderBy = 'created_at', order = 
     }
 }
 
+// レシピ一覧画面からレシピを ID で取得
+export async function getRecipeById(id) {
+    try {
+        console.log("getRecipeById:", id);
+        const url = new URL(`${SUPABASE_URL}/rest/v1/recipes`);
+        url.searchParams.set('select', '*');
+        url.searchParams.set('id', `eq.${id}`);
+
+        const res = await fetch(url.toString(), {
+            method: 'GET',
+            headers: headers,
+        });
+
+        console.log("getRecipeById status:", res.status);
+        if (!res.ok) {
+            const txt = await res.text().catch(() => null);
+            console.error("getRecipeById error:", res.status, txt);
+            return null;
+        }
+
+        const data = await res.json().catch(() => null);
+        return Array.isArray(data) && data.length > 0 ? data[0] : null;
+    } catch (err) {
+        console.error("getRecipeById exception:", err);
+        return null;
+    }
+}
+
+// レシピを更新（PATCH）
+export async function updateRecipe(id, recipe) {
+    try {
+        console.log("updateRecipe:", id, recipe);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: { ...headers, Prefer: 'return=representation' },
+            body: JSON.stringify(recipe),
+        });
+
+        console.log("updateRecipe status:", res.status);
+        if (!res.ok) {
+            const err = await res.text().catch(() => null);
+            console.error("updateRecipe error:", res.status, err);
+            return null;
+        }
+
+        const data = await res.json().catch(() => null);
+        return data;
+    } catch (err) {
+        console.error("updateRecipe exception:", err);
+        throw err;
+    }
+}
+
 
 
 /* -----------------------------

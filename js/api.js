@@ -59,6 +59,37 @@ export async function createRecipe(recipe) {
     }
 }
 
+// レシピ一覧画面に登録したレシピを表示する
+export async function getRecipes({ limit = 100, orderBy = 'created_at', order = 'desc' } = {}) {
+    try {
+        console.log("getRecipes 呼び出し: limit=", limit, "orderBy=", orderBy, "order=", order);
+        const url = new URL(`${SUPABASE_URL}/rest/v1/recipes`);
+        // クエリ例: ?select=*&order=created_at.desc&limit=100
+        url.searchParams.set('select', '*');
+        url.searchParams.set('order', `${orderBy}.${order}`);
+        url.searchParams.set('limit', String(limit));
+
+        const res = await fetch(url.toString(), {
+            method: 'GET',
+            headers: headers, // 既存の headers を利用 (apikey, Authorization, Content-Type 等)
+        });
+
+        console.log("getRecipes HTTP status:", res.status);
+        if (!res.ok) {
+            const err = await res.text().catch(() => null);
+            console.error("getRecipes エラー:", res.status, err);
+            return null;
+        }
+
+        const data = await res.json().catch(() => null);
+        console.log("getRecipes レスポンス:", data);
+        return Array.isArray(data) ? data : [];
+    } catch (err) {
+        console.error("getRecipes 例外:", err);
+        return null;
+    }
+}
+
 
 
 /* -----------------------------

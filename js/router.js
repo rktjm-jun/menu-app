@@ -74,6 +74,15 @@ function runPageInit(hash) {
             initRecipeFormPage();
         }
     }
+
+    // レシピ一覧画面
+    if (hash === "#/recipe/list") {
+        if (typeof window.initRecipeListPage === "function") {
+            window.initRecipeListPage();
+        } else if (typeof initRecipeListPage === "function") {
+            initRecipeListPage();
+        }
+    }
 }
 
 // ハッシュ変更時に発火

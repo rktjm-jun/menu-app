@@ -7,12 +7,10 @@ const routes = [
     "#/calendar/list",
     "#/meal/create",
     "#/recipe/list",
-    "#/recipe/form",
+    "#/recipe/form",     // ← 修正ポイント：レシピ登録画面
     "#/recipe/select",
     "#/family"
 ];
-
-
 
 // 初期画面
 let currentPage = null;
@@ -33,6 +31,8 @@ function showPage(hash) {
     if (!currentPage) {
         targetPage.classList.add("active");
         currentPage = targetPage;
+
+        runPageInit(hash);
         return;
     }
 
@@ -49,11 +49,31 @@ function showPage(hash) {
     setTimeout(() => {
         currentPage.classList.remove("leave-left");
         currentPage = targetPage;
+
+        runPageInit(hash);
     }, 350);
 
-    //一覧タブに切り替わったら一覧を生成
+    // カレンダー一覧タブに切り替わったら一覧を生成
     if (hash === "#/calendar/list") renderCalendarList();
+}
 
+// ページ固有の初期化処理
+function runPageInit(hash) {
+
+    // 献立作成画面
+    if (hash === "#/meal/create") {
+        const d = sessionStorage.getItem("selectedDate");
+        if (d) {
+            document.getElementById("meal-date").textContent = d;
+        }
+    }
+
+    // レシピ登録画面（#/recipe/form）
+    if (hash === "#/recipe/form") {
+        if (typeof initRecipeFormPage === "function") {
+            initRecipeFormPage();
+        }
+    }
 }
 
 // ハッシュ変更時に発火

@@ -24,13 +24,42 @@ export async function fetchRecipes() {
 
 // レシピ登録
 export async function createRecipe(recipe) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/recipes`, {
-        method: "POST",
-        headers: { ...headers, Prefer: "return=representation" },
-        body: JSON.stringify(recipe),
-    });
-    return res.json();
+    try {
+        console.log("createRecipe 呼び出し:", recipe);
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/recipes`, {
+            method: "POST",
+            headers: { ...headers, Prefer: "return=representation" },
+            body: JSON.stringify(recipe),
+        });
+
+        console.log("HTTP status:", res.status, res.statusText);
+
+        // レスポンスが JSON でない場合に備えて try/catch
+        let data = null;
+        try {
+            data = await res.json();
+        } catch (e) {
+            console.warn("レスポンス JSON のパースに失敗しました", e);
+        }
+        console.log("レスポンス JSON:", data);
+
+        if (!res.ok) {
+            console.error("Supabase エラー:", res.status, data);
+            // 呼び出し元で失敗を判定しやすいよう null を返す
+            return null;
+        }
+
+        return data;
+    } catch (err) {
+        console.error("createRecipe 例外:", err);
+        // 呼び出し元で catch できるよう例外を投げるか null を返す選択があるが、
+        // app.js 側で try/catch しているのでここでは例外を再スローする
+        throw err;
+    }
 }
+
+
 
 /* -----------------------------
    献立（meal_plans）

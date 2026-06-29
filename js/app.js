@@ -35,7 +35,12 @@ function initRecipeFormPage() {
 
     const submitBtn = section.querySelector(".recipe-form-submit");
 
-    submitBtn.addEventListener("click", async () => {
+    // 既にリスナーが登録されている可能性を避けるため、一度削除してから登録
+    // （同じページを何度も初期化する SPA の挙動対策）
+    submitBtn.replaceWith(submitBtn.cloneNode(true));
+    const newSubmitBtn = section.querySelector(".recipe-form-submit");
+
+    newSubmitBtn.addEventListener("click", async () => {
         console.log("保存ボタンが押されました");
         const title = titleInput.value.trim();
         const ingredients = ingredientsInput.value.trim();
@@ -55,15 +60,38 @@ function initRecipeFormPage() {
             thumbnail_url: "",            // 写真は後で Supabase Storage と連携
             created_at: new Date().toISOString(),
         };
-        console.log("送信データ:", recipe); 
+        console.log("送信データ:", recipe);
 
-        const result = await createRecipe(recipe);
+        // B: 送信中はボタンを無効化して二重送信を防ぐ
+        newSubmitBtn.disabled = true;
+        const originalText = newSubmitBtn.textContent;
+        newSubmitBtn.textContent = "送信中...";
 
-        if (result && result.length > 0) {
-            alert("レシピを登録しました！");
-            location.hash = "#/recipe/list";  // 一覧へ戻る
-        } else {
-            alert("登録に失敗しました…");
+        try {
+            const result = await createRecipe(recipe); // A: api.js 側でログと例外処理を行う
+
+            // C: 成功時にフォームをクリアして一覧へ遷移
+            if (result && result.length > 0) {
+                alert("レシピを登録しました！");
+                // フォームをクリア
+                titleInput.value = "";
+                ingredientsInput.value = "";
+                instructionsInput.value = "";
+                // 一覧へ戻る
+                location.hash = "#/recipe/list";
+            } else {
+                // createRecipe が null を返すなど失敗時
+                console.error("createRecipe returned no data", result);
+                alert("登録に失敗しました…");
+            }
+        } catch (err) {
+            // 予期しない例外が発生した場合のフォールバック
+            console.error("レシピ登録中に例外が発生しました:", err);
+            alert("登録中にエラーが発生しました。コンソールのエラーを確認してください。");
+        } finally {
+            // ボタン状態を復元
+            newSubmitBtn.disabled = false;
+            newSubmitBtn.textContent = originalText;
         }
     });
 }

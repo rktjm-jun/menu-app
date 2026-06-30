@@ -159,6 +159,8 @@ export async function fetchMealPlans(yearMonth) {
     return res.json();
 }
 
+window.fetchMealPlans = fetchMealPlans;
+
 /**
  * meal_plans に対する upsert（date + meal_type の衝突時に recipe_id を更新）
  * 引数: { date: 'YYYY-MM-DD', meal_type: 'dinner', recipe_id: 123 }
@@ -227,3 +229,5 @@ export async function fetchMealPlanByDate(date) {
         return null;
     }
 }
+
+window.fetchMealPlanByDate = fetchMealPlanByDate;

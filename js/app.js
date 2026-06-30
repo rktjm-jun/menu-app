@@ -401,7 +401,14 @@ async function initRecipeSelectPage() {
                 alert('献立の登録に失敗しました');
                 return;
             }
+
+            // --- ここでカレンダーの該当セルを即時更新します ---
             alert('献立を登録しました');
+            if (typeof window.updateCalendarCellForDate === 'function') {
+                // date は YYYY-MM-DD 形式の文字列
+                window.updateCalendarCellForDate(date);
+            }
+            // --- 更新後にカレンダー画面へ戻す ---
             location.hash = '#/calendar/month';
         } catch (err) {
             console.error('initRecipeSelectPage upsert error', err);

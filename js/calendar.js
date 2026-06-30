@@ -12,7 +12,7 @@ function formatYMD(y, m, d) {
     return `${y}-${mm}-${dd}`;
 }
 
-function renderCalendar() {
+async function renderCalendar() {
     const container = document.getElementById("calendar-month-container");
     if (!container) return;
 
@@ -99,8 +99,14 @@ function renderCalendar() {
     // イベント委譲で日付クリックを処理
     container.removeEventListener('click', calendarClickHandler);
     container.addEventListener('click', calendarClickHandler);
+
+    // 月描画後に該当月の献立を取得してセルに反映する
+    // yearMonth は "YYYY-MM"
+    const yearMonth = `${String(currentYear)}-${String(currentMonth + 1).padStart(2, '0')}`;
+    populateMealsOnCalendar(yearMonth);
 }
 
+// イベントハンドラはそのまま
 function calendarClickHandler(e) {
     const cell = e.target.closest('.daycell');
     if (!cell) return;
@@ -133,7 +139,83 @@ function nextMonth() {
 // 初期表示
 window.addEventListener("load", renderCalendar);
 
-// 一覧画面（6週間＝42日）生成
+/* ------------------------------
+   meal_plans を取得してカレンダーに反映する
+   依存: window.fetchMealPlans(yearMonth) を呼べること
+------------------------------ */
+async function populateMealsOnCalendar(yearMonth) {
+    try {
+        if (typeof window.fetchMealPlans !== 'function') {
+            // fetchMealPlans が未公開なら何もしない
+            console.warn('populateMealsOnCalendar: fetchMealPlans not available');
+            return;
+        }
+
+        const plans = await window.fetchMealPlans(yearMonth);
+        if (!Array.isArray(plans)) return;
+
+        // date をキーにした map を作る
+        const map = {};
+        plans.forEach(p => {
+            if (p && p.date) {
+                map[p.date] = p;
+            }
+        });
+
+        // カレンダー上のセルを走査して更新
+        document.querySelectorAll('.daycell[data-date]').forEach(cell => {
+            const d = cell.dataset.date;
+            const label = cell.querySelector('.dlabel');
+            if (!label) return;
+            if (map[d] && map[d].recipes && map[d].recipes.title) {
+                label.textContent = map[d].recipes.title;
+                label.classList.add('has-meal');
+            } else {
+                label.textContent = '未定';
+                label.classList.remove('has-meal');
+            }
+        });
+    } catch (err) {
+        console.error('populateMealsOnCalendar error', err);
+    }
+}
+
+// 該当日だけを再取得して更新するユーティリティ（upsert 後に呼ぶ）
+async function updateCalendarCellForDate(date) {
+    try {
+        if (!date) return;
+        // まずセルがあるか確認
+        const cell = document.querySelector(`.daycell[data-date="${date}"]`);
+        if (!cell) return;
+
+        // fetchMealPlanByDate が公開されていればそれを使う（より軽量）
+        if (typeof window.fetchMealPlanByDate === 'function') {
+            const plan = await window.fetchMealPlanByDate(date);
+            const label = cell.querySelector('.dlabel');
+            if (!label) return;
+            if (plan && plan.recipes && plan.recipes.title) {
+                label.textContent = plan.recipes.title;
+                label.classList.add('has-meal');
+            } else {
+                label.textContent = '未定';
+                label.classList.remove('has-meal');
+            }
+            return;
+        }
+
+        // 代替: 月全体を再取得して反映（フォールバック）
+        const ym = date.slice(0, 7); // "YYYY-MM"
+        await populateMealsOnCalendar(ym);
+    } catch (err) {
+        console.error('updateCalendarCellForDate error', err);
+    }
+}
+
+// グローバルに公開して他から呼べるようにする
+window.updateCalendarCellForDate = updateCalendarCellForDate;
+window.populateMealsOnCalendar = populateMealsOnCalendar;
+
+// 一覧画面（6週間＝42日）生成（既存の実装を維持しつつ meal_plans を反映）
 function renderCalendarList() {
     const container = document.getElementById("calendar-list-container");
     if (!container) return;
@@ -207,13 +289,24 @@ function renderCalendarList() {
     // 一覧のクリックも委譲して献立作成へ遷移
     container.removeEventListener('click', calendarListClickHandler);
     container.addEventListener('click', calendarListClickHandler);
-}
 
-function calendarListClickHandler(e) {
-    const row = e.target.closest('.lrow');
-    if (!row) return;
-    const dateStr = row.getAttribute('data-date');
-    if (!dateStr) return;
-    sessionStorage.setItem("selectedDate", dateStr);
-    location.hash = "#/meal/create";
+    // 一覧でも meal_plans を反映する（同じ年月）
+    const yearMonth = `${String(currentYear)}-${String(currentMonth + 1).padStart(2, '0')}`;
+    if (typeof window.fetchMealPlans === 'function') {
+        window.fetchMealPlans(yearMonth).then(plans => {
+            if (!Array.isArray(plans)) return;
+            const map = {};
+            plans.forEach(p => { if (p && p.date) map[p.date] = p; });
+            container.querySelectorAll('.lrow[data-date]').forEach(row => {
+                const d = row.dataset.date;
+                const span = row.querySelector('span[style*="flex:1"]');
+                if (!span) return;
+                if (map[d] && map[d].recipes && map[d].recipes.title) {
+                    span.textContent = map[d].recipes.title;
+                } else {
+                    span.textContent = '未定';
+                }
+            });
+        }).catch(err => console.error('renderCalendarList fetchMealPlans error', err));
+    }
 }

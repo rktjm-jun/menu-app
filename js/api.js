@@ -150,13 +150,57 @@ export async function updateRecipe(id, recipe) {
 ----------------------------- */
 
 // 月の献立一覧（JOIN 付き）
+/**
+ * 月の献立一覧（JOIN 付き）
+ * 引数: yearMonth 例: "2026-06"
+ * 戻り値: 配列または null
+ */
 export async function fetchMealPlans(yearMonth) {
-    // 例: "2026-06" の月の献立を取得
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/meal_plans?select=*,recipes(title,thumbnail_url)&date=gte.${yearMonth}-01&date=lte.${yearMonth}-31`,
-        { headers }
-    );
-    return res.json();
+    try {
+        if (!yearMonth || typeof yearMonth !== 'string') {
+            console.warn('fetchMealPlans: invalid yearMonth', yearMonth);
+            return null;
+        }
+
+        // yearMonth をパースして最終日を計算する
+        // yearMonth 例: "2026-06"
+        const parts = yearMonth.split('-');
+        if (parts.length !== 2) {
+            console.warn('fetchMealPlans: unexpected yearMonth format', yearMonth);
+            return null;
+        }
+        const year = Number(parts[0]);
+        const month = Number(parts[1]); // 1-12
+
+        if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+            console.warn('fetchMealPlans: invalid year or month', yearMonth);
+            return null;
+        }
+
+        // JS の Date は月が 0 始まりなので month を調整
+        const lastDay = new Date(year, month, 0).getDate(); // month は次月の 0 日で最終日を得る
+
+        const gte = `${yearMonth}-01`;
+        const lte = `${yearMonth}-${String(lastDay).padStart(2, '0')}`;
+
+        const url = new URL(`${SUPABASE_URL}/rest/v1/meal_plans`);
+        // recipes を join して title を取得
+        url.searchParams.set('select', '*,recipes(title,thumbnail_url)');
+        url.searchParams.set('date', `gte.${gte}`);
+        url.searchParams.append('date', `lte.${lte}`);
+
+        const res = await fetch(url.toString(), { method: 'GET', headers });
+        if (!res.ok) {
+            const txt = await res.text().catch(() => null);
+            console.error('fetchMealPlans error:', res.status, txt);
+            return null;
+        }
+        const data = await res.json().catch(() => null);
+        return Array.isArray(data) ? data : [];
+    } catch (err) {
+        console.error('fetchMealPlans exception:', err);
+        return null;
+    }
 }
 
 window.fetchMealPlans = fetchMealPlans;

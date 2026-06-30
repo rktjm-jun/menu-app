@@ -158,3 +158,44 @@ export async function fetchMealPlans(yearMonth) {
     );
     return res.json();
 }
+
+/**
+ * meal_plans に対する upsert（date + meal_type の衝突時に recipe_id を更新）
+ * 引数: { date: 'YYYY-MM-DD', meal_type: 'dinner', recipe_id: 123 }
+ * 戻り値: 挿入/更新された行（オブジェクト）または null
+ */
+export async function upsertMealPlan({ date, meal_type = 'dinner', recipe_id }) {
+    try {
+        if (!date) throw new Error('date is required');
+        const payload = [{
+            date,
+            meal_type,
+            recipe_id,
+            created_at: new Date().toISOString()
+        }];
+
+        const url = new URL(`${SUPABASE_URL}/rest/v1/meal_plans`);
+        url.searchParams.set('on_conflict', 'date,meal_type');
+
+        const res = await fetch(url.toString(), {
+            method: 'POST',
+            headers: {
+                ...headers,
+                Prefer: 'return=representation,resolution=merge-duplicates'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const txt = await res.text().catch(() => null);
+            console.error('upsertMealPlan error:', res.status, txt);
+            return null;
+        }
+
+        const data = await res.json().catch(() => null);
+        return Array.isArray(data) && data.length > 0 ? data[0] : null;
+    } catch (err) {
+        console.error('upsertMealPlan exception:', err);
+        return null;
+    }
+}

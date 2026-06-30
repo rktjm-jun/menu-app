@@ -28,10 +28,19 @@ window.openMealCreate = function openMealCreate(dateStr) {
 // 献立作成画面：日付の読み込み
 // ------------------------------
 window.addEventListener("hashchange", () => {
-    if (location.hash === "#/meal/create") {
+    const normalized = location.hash.split('?')[0];
+    if (normalized === "#/meal/create") {
         const d = sessionStorage.getItem("selectedDate");
         if (d) {
-            document.getElementById("meal-date").textContent = d;
+            const el = document.getElementById("meal-date");
+            if (el) {
+                el.textContent = d;
+            } else {
+                setTimeout(() => {
+                    const el2 = document.getElementById("meal-date");
+                    if (el2) el2.textContent = d;
+                }, 50);
+            }
         }
     }
 });
@@ -39,7 +48,7 @@ window.addEventListener("hashchange", () => {
 // ------------------------------
 // レシピ関連：Supabase 連携
 // ------------------------------
-import { createRecipe, getRecipes, getRecipeById, updateRecipe } from "./api.js";
+import { createRecipe, getRecipes, getRecipeById, updateRecipe upsertMealPlan } from "./api.js";
 
 /**
  * ハッシュのクエリ部分をパースしてオブジェクトで返す
@@ -288,6 +297,117 @@ function initRecipeListPage() {
 }
 
 window.initRecipeListPage = initRecipeListPage;
+
+/* ------------------------------
+   レシピ選択画面の初期化（recipe-select）
+------------------------------ */
+async function initRecipeSelectPage() {
+    console.log("initRecipeSelectPage called");
+    const section = document.getElementById("recipe-select");
+    if (!section) return;
+
+    const listContainer = section.querySelector('.recipe-select-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<div class="loading">読み込み中…</div>';
+
+    const data = await getRecipes({ limit: 200, orderBy: 'created_at', order: 'desc' });
+    if (data === null) {
+        listContainer.innerHTML = '<div class="error">レシピの取得に失敗しました。後でもう一度お試しください。</div>';
+        return;
+    }
+
+    if (data.length === 0) {
+        listContainer.innerHTML = '<div class="empty">登録されたレシピがありません。</div>';
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    data.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'rrow select-row';
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.padding = '8px 0';
+
+        const left = document.createElement('div');
+        left.style.flex = '1';
+        left.style.minWidth = '0';
+
+        const titleP = document.createElement('p');
+        titleP.style.margin = '0';
+        titleP.style.fontSize = '14px';
+        titleP.style.fontWeight = '500';
+        titleP.textContent = r.title || '無題';
+
+        const descP = document.createElement('p');
+        descP.style.margin = '2px 0 0';
+        descP.style.fontSize = '11px';
+        descP.style.color = 'var(--color-text-secondary)';
+        descP.textContent = (r.description || r.instructions) ? '材料・作り方あり' : '';
+
+        left.appendChild(titleP);
+        left.appendChild(descP);
+
+        const radioWrap = document.createElement('div');
+        radioWrap.style.marginLeft = '12px';
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'selectedRecipe';
+        radio.value = String(r.id);
+        radio.id = `recipe-radio-${r.id}`;
+
+        radioWrap.appendChild(radio);
+
+        row.appendChild(left);
+        row.appendChild(radioWrap);
+
+        fragment.appendChild(row);
+    });
+
+    listContainer.innerHTML = '';
+    listContainer.appendChild(fragment);
+
+    const decideBtnSelector = '.recipe-select-submit';
+    let decideBtn = section.querySelector(decideBtnSelector);
+    if (!decideBtn) return;
+    decideBtn.replaceWith(decideBtn.cloneNode(true));
+    decideBtn = section.querySelector(decideBtnSelector);
+
+    decideBtn.addEventListener('click', async () => {
+        const sel = section.querySelector('input[name="selectedRecipe"]:checked');
+        if (!sel) {
+            alert('レシピを選択してください');
+            return;
+        }
+        const recipeId = Number(sel.value);
+        const date = sessionStorage.getItem('selectedDate');
+        if (!date) {
+            alert('選択された日付が見つかりません');
+            location.hash = '#/calendar/month';
+            return;
+        }
+
+        const mealType = sessionStorage.getItem('selectedMealType') || 'dinner';
+
+        try {
+            const res = await upsertMealPlan({ date, meal_type: mealType, recipe_id: recipeId });
+            if (!res) {
+                alert('献立の登録に失敗しました');
+                return;
+            }
+            alert('献立を登録しました');
+            location.hash = '#/calendar/month';
+        } catch (err) {
+            console.error('initRecipeSelectPage upsert error', err);
+            alert('献立の登録中にエラーが発生しました');
+        }
+    });
+}
+
+window.initRecipeSelectPage = initRecipeSelectPage;
 
 // ------------------------------
 // ユーティリティ

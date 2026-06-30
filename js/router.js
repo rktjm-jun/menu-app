@@ -96,6 +96,13 @@ function runPageInit(hash) {
             initRecipeListPage();
         }
     }
+
+    // レシピ選択画面
+    if (normalized === "#/recipe/select") {
+        if (typeof window.initRecipeSelectPage === "function") {
+            window.initRecipeSelectPage();
+        }
+    }
 }
 
 // ハッシュ変更時に発火

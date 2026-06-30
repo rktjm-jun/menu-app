@@ -1,9 +1,16 @@
+// js/calendar.js
 // ------------------------------
 // 月間カレンダー（前月・次月の補完日つき）
 // ------------------------------
 
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth(); // 0 = Jan
+
+function formatYMD(y, m, d) {
+    const mm = String(m).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    return `${y}-${mm}-${dd}`;
+}
 
 function renderCalendar() {
     const container = document.getElementById("calendar-month-container");
@@ -12,18 +19,11 @@ function renderCalendar() {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
 
-    const startWeekday = firstDay.getDay();      // 月初の曜日
-    const totalDays = lastDay.getDate();         // 今月の日数
+    const startWeekday = firstDay.getDay();
+    const totalDays = lastDay.getDate();
 
-    // 前月の最終日
     const prevLastDay = new Date(currentYear, currentMonth, 0).getDate();
 
-    // ------------------------------
-    // ヘッダー（前月・次月）
-    // ------------------------------
-    // ------------------------------
-    // ヘッダー（前月・次月）
-    // ------------------------------
     let html = `
     <div style="
         display:flex;
@@ -45,10 +45,6 @@ function renderCalendar() {
     </div>
 `;
 
-
-    // ------------------------------
-    // 曜日
-    // ------------------------------
     html += `
         <div class="grid7" style="padding:0 16px 4px;font-size:11px;color:var(--color-text-tertiary);text-align:center;">
             <div style="color:var(--color-text-danger);">日</div>
@@ -57,12 +53,9 @@ function renderCalendar() {
         </div>
     `;
 
-    // ------------------------------
-    // 日付グリッド（6週間固定）
-    // ------------------------------
     html += `<div class="grid7" style="padding:0 16px 14px;">`;
 
-    // ① 前月の補完日
+    // 前月の補完日
     for (let i = 0; i < startWeekday; i++) {
         const day = prevLastDay - startWeekday + 1 + i;
         html += `
@@ -73,17 +66,20 @@ function renderCalendar() {
         `;
     }
 
-    // ② 今月の日付
+    // 今月の日付（data-date 属性で日付を保持）
     for (let d = 1; d <= totalDays; d++) {
+        const y = currentYear;
+        const m = currentMonth + 1;
+        const dateStr = formatYMD(y, m, d);
         html += `
-            <div class="daycell" onclick="openMealCreate(${currentYear}, ${currentMonth + 1}, ${d})">
+            <div class="daycell" data-date="${dateStr}">
                 <span class="dnum">${d}</span>
                 <span class="dlabel">未定</span>
             </div>
         `;
     }
 
-    // ③ 次月の補完日（42セルになるまで埋める）
+    // 次月の補完日
     const totalCells = startWeekday + totalDays;
     const nextDays = 42 - totalCells;
 
@@ -99,11 +95,23 @@ function renderCalendar() {
     html += `</div>`;
 
     container.innerHTML = html;
+
+    // イベント委譲で日付クリックを処理
+    container.removeEventListener('click', calendarClickHandler);
+    container.addEventListener('click', calendarClickHandler);
 }
 
-// ------------------------------
-// 月移動
-// ------------------------------
+function calendarClickHandler(e) {
+    const cell = e.target.closest('.daycell');
+    if (!cell) return;
+    const dateStr = cell.getAttribute('data-date');
+    if (!dateStr) return;
+    // data-date は YYYY-MM-DD
+    sessionStorage.setItem("selectedDate", dateStr);
+    console.log('[calendar] selectedDate set:', dateStr);
+    location.hash = "#/meal/create";
+}
+
 function prevMonth() {
     currentMonth--;
     if (currentMonth < 0) {
@@ -122,20 +130,10 @@ function nextMonth() {
     renderCalendar();
 }
 
-// ------------------------------
-// 日付クリック → 献立作成へ
-// ------------------------------
-function openMealCreate(y, m, d) {
-    sessionStorage.setItem("selectedDate", `${y}年${m}月${d}日`);
-    location.hash = "#/meal/create";
-}
-
 // 初期表示
 window.addEventListener("load", renderCalendar);
 
-// ------------------------------
 // 一覧画面（6週間＝42日）生成
-// ------------------------------
 function renderCalendarList() {
     const container = document.getElementById("calendar-list-container");
     if (!container) return;
@@ -150,7 +148,7 @@ function renderCalendarList() {
 
     let html = "";
 
-    // ① 前月の補完日
+    // 前月の補完日
     for (let i = 0; i < startWeekday; i++) {
         const day = prevLastDay - startWeekday + 1 + i;
         const date = new Date(currentYear, currentMonth - 1, day);
@@ -167,13 +165,14 @@ function renderCalendarList() {
         `;
     }
 
-    // ② 今月の日付
+    // 今月の日付
     for (let d = 1; d <= totalDays; d++) {
         const date = new Date(currentYear, currentMonth, d);
         const weekday = ["日", "月", "火", "水", "木", "金", "土"][date.getDay()];
+        const dateStr = formatYMD(date.getFullYear(), date.getMonth() + 1, d);
 
         html += `
-            <div class="lrow" onclick="openMealCreate(${currentYear}, ${currentMonth + 1}, ${d})">
+            <div class="lrow" data-date="${dateStr}">
                 <span style="width:64px;font-size:12px;color:var(--color-text-secondary);">
                     ${currentMonth + 1}/${d}（${weekday}）
                 </span>
@@ -184,7 +183,7 @@ function renderCalendarList() {
         `;
     }
 
-    // ③ 次月の補完日（42セルになるまで）
+    // 次月の補完日
     const totalCells = startWeekday + totalDays;
     const nextDays = 42 - totalCells;
 
@@ -204,4 +203,17 @@ function renderCalendarList() {
     }
 
     container.innerHTML = html;
+
+    // 一覧のクリックも委譲して献立作成へ遷移
+    container.removeEventListener('click', calendarListClickHandler);
+    container.addEventListener('click', calendarListClickHandler);
+}
+
+function calendarListClickHandler(e) {
+    const row = e.target.closest('.lrow');
+    if (!row) return;
+    const dateStr = row.getAttribute('data-date');
+    if (!dateStr) return;
+    sessionStorage.setItem("selectedDate", dateStr);
+    location.hash = "#/meal/create";
 }

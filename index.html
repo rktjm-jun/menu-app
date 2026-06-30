@@ -62,18 +62,16 @@
                 </header>
 
                 <div class="meal-create-date-box">
-                    <!-- id を追加 -->
                     <span id="meal-date" class="meal-create-date">2026年6月26日（金）</span>
                 </div>
 
-                <!-- 未決定表示（既存の見た目を維持） -->
+                <!-- 未決定時のメッセージ -->
                 <div class="meal-create-empty">
                     <i class="ti ti-tools-kitchen-2 meal-create-empty-icon" aria-hidden="true"></i>
-                    <!-- id を付与して JS から制御できるようにする -->
                     <p id="meal-create-empty-text" class="meal-create-empty-text">まだ献立が決まっていません</p>
                 </div>
 
-                <!-- 未決定時に表示する操作ボタン群（JS で表示/非表示を切替） -->
+                <!-- 未決定時の操作ボタン群 -->
                 <div class="meal-create-buttons" style="display:flex;gap:8px;">
                     <button class="cta meal-create-btn-select"
                             onclick="location.hash='#/recipe/select'">
@@ -81,18 +79,17 @@
                         レシピ一覧から選ぶ
                     </button>
 
-                    <!-- id を付けて JS からハンドラを付与できるようにする -->
                     <button id="meal-create-btn-random" class="cta meal-create-btn-random">
                         <i class="ti ti-arrows-shuffle meal-create-btn-icon" aria-hidden="true"></i>
                         ランダム提案で決める
                     </button>
                 </div>
 
-                <!-- 選択済み表示（初期は非表示、JS で切替） -->
+                <!-- 選択済み表示（初期は非表示） -->
                 <div id="meal-selected-recipe" style="display:none; padding:12px 16px; border-radius:8px; margin-top:8px;">
                     <div style="display:flex;align-items:center;gap:12px;">
-                        <div class="meal-create-random-thumb" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--color-surface);">
-                            <i class="ti ti-tools-kitchen-2 meal-create-random-thumb-icon" aria-hidden="true"></i>
+                        <div class="meal-create-thumb" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--color-surface);">
+                            <i class="ti ti-tools-kitchen-2 meal-create-thumb-icon" aria-hidden="true"></i>
                         </div>
                         <div style="flex:1;min-width:0;">
                             <div id="meal-selected-recipe-title" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">レシピ名</div>
@@ -101,39 +98,41 @@
                     </div>
 
                     <div style="margin-top:10px;display:flex;gap:8px;">
+                        <!-- レシピ一覧へ遷移（決まっている場合も表示） -->
                         <button id="meal-selected-change" class="cta" style="flex:1;">
-                            変更する
+                            レシピ一覧から選ぶ
                         </button>
+                        <!-- 削除ボタン -->
                         <button id="meal-selected-clear" class="cta" style="flex:1;">
                             削除
                         </button>
                     </div>
                 </div>
 
-                <!-- ランダム提案の結果表示（既存の UI を維持） -->
-                <div class="meal-create-random-box" style="margin-top:12px;">
+                <!-- ランダム提案の結果（初期は非表示。ボタン押下で表示） -->
+                <div id="meal-create-random-box" class="meal-create-random-box" style="display:none; margin-top:12px;">
                     <p class="meal-create-random-title">ランダム提案の結果</p>
 
-                    <div class="meal-create-random-item">
-                        <div class="meal-create-random-thumb">
+                    <div class="meal-create-random-item" style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+                        <div id="meal-create-random-thumb" class="meal-create-random-thumb" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--color-surface);">
                             <i class="ti ti-tools-kitchen-2 meal-create-random-thumb-icon" aria-hidden="true"></i>
                         </div>
-                        <span class="meal-create-random-name">野菜炒め</span>
+                        <span id="meal-create-random-name" class="meal-create-random-name" style="font-weight:600;">野菜炒め</span>
                     </div>
 
-                    <div class="meal-create-random-actions">
-                        <button class="meal-create-random-again">
-                            <i class="ti ti-refresh meal-create-random-again-icon" aria-hidden="true"></i>
-                            もう一度
+                    <div class="meal-create-random-actions" style="margin-top:10px;display:flex;gap:8px;">
+                        <button id="meal-create-random-again" class="meal-create-random-again cta" style="flex:1;">
+                            <i class="ti ti-refresh" aria-hidden="true"></i> もう一度
                         </button>
 
-                        <button class="meal-create-random-decide">
+                        <button id="meal-create-random-decide" class="meal-create-random-decide cta" style="flex:1;">
                             この献立に決定
                         </button>
                     </div>
                 </div>
 
             </section>
+
 
 
             <!-- ------------------------------

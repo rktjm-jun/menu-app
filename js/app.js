@@ -418,64 +418,72 @@ window.initRecipeSelectPage = initRecipeSelectPage;
 async function loadMealForSelectedDate() {
     try {
         const date = sessionStorage.getItem("selectedDate");
-        if (!date) {
-            console.log("loadMealForSelectedDate: no selectedDate in sessionStorage");
-            // 非表示にする
-            const emptyText = document.getElementById('meal-create-empty-text');
-            const selectedBox = document.getElementById('meal-selected-recipe');
-            if (emptyText) emptyText.style.display = 'block';
-            if (selectedBox) selectedBox.style.display = 'none';
-            return;
-        }
-
-        // fetchMealPlanByDate は api.js で定義済み
-        const plan = await fetchMealPlanByDate(date);
-        console.log('loadMealForSelectedDate plan:', plan);
 
         const emptyText = document.getElementById('meal-create-empty-text');
+        const buttonsBox = document.querySelector('.meal-create-buttons');
         const selectedBox = document.getElementById('meal-selected-recipe');
         const titleEl = document.getElementById('meal-selected-recipe-title');
         const subEl = document.getElementById('meal-selected-recipe-sub');
 
-        if (!emptyText || !selectedBox || !titleEl) {
+        const randomBox = document.getElementById('meal-create-random-box');
+        const randomName = document.getElementById('meal-create-random-name');
+        const randomThumb = document.getElementById('meal-create-random-thumb');
+        const randomAgainBtn = document.getElementById('meal-create-random-again');
+        const randomDecideBtn = document.getElementById('meal-create-random-decide');
+        const randomTriggerBtn = document.getElementById('meal-create-btn-random');
+
+        // 必須要素チェック
+        if (!emptyText || !buttonsBox || !selectedBox || !titleEl) {
             console.warn('loadMealForSelectedDate: required DOM missing');
             return;
         }
 
+        // 初期状態: ランダム結果は非表示（ボタン押下で表示）
+        if (randomBox) randomBox.style.display = 'none';
+
+        if (!date) {
+            // 日付が無い場合は未決定表示
+            emptyText.style.display = 'block';
+            buttonsBox.style.display = 'flex';
+            selectedBox.style.display = 'none';
+            return;
+        }
+
+        // API から該当日の献立を取得
+        const plan = await fetchMealPlanByDate(date);
+        console.log('loadMealForSelectedDate plan:', plan);
+
         if (plan && plan.recipes) {
-            // 表示: レシピ名をセット
+            // 決定済み: 日付、選択済みレシピ、一覧ボタン、削除ボタンを表示
             titleEl.textContent = plan.recipes.title || 'レシピ';
-            if (subEl) subEl.textContent = plan.recipes.thumbnail_url ? '写真あり' : 'レシピが登録されています';
+            subEl.textContent = plan.recipes.thumbnail_url ? '写真あり' : 'レシピが登録されています';
+
             emptyText.style.display = 'none';
+            buttonsBox.style.display = 'none'; // 未決定用ボタンは隠す
             selectedBox.style.display = 'block';
         } else {
-            // 未決定表示
+            // 未決定: 未決定テキストと操作ボタンを表示、選択済み表示は隠す
             emptyText.style.display = 'block';
+            buttonsBox.style.display = 'flex';
             selectedBox.style.display = 'none';
         }
 
-        // 変更ボタン（レシピ一覧へ）
+        // 変更ボタン（一覧へ）
         const changeBtn = document.getElementById('meal-selected-change');
-        if (changeBtn) {
-            changeBtn.onclick = () => {
-                location.hash = '#/recipe/select';
-            };
-        }
+        if (changeBtn) changeBtn.onclick = () => { location.hash = '#/recipe/select'; };
 
-        // 削除ボタン（recipe_id を null にして upsert する簡易実装）
+        // 削除ボタン（簡易）
         const clearBtn = document.getElementById('meal-selected-clear');
         if (clearBtn) {
             clearBtn.onclick = async () => {
                 if (!confirm('この日の献立を削除しますか？')) return;
                 try {
-                    // recipe_id を null にして upsert（DB の制約により動かない場合は DELETE 実装が必要）
                     const mealType = sessionStorage.getItem('selectedMealType') || 'dinner';
                     const res = await upsertMealPlan({ date, meal_type: mealType, recipe_id: null });
                     if (!res) {
                         alert('削除に失敗しました');
                         return;
                     }
-                    // 再読み込みして反映
                     await loadMealForSelectedDate();
                     alert('献立を削除しました');
                 } catch (err) {
@@ -484,13 +492,71 @@ async function loadMealForSelectedDate() {
                 }
             };
         }
+
+        // ランダム提案ボタンのハンドラ（初回押下でランダム候補を取得して表示）
+        if (randomTriggerBtn) {
+            randomTriggerBtn.onclick = async () => {
+                try {
+                    // 取得は getRecipes を利用（モックや件数に応じて調整）
+                    const all = await getRecipes({ limit: 200, orderBy: 'created_at', order: 'desc' });
+                    if (!Array.isArray(all) || all.length === 0) {
+                        alert('レシピが登録されていません');
+                        return;
+                    }
+                    // ランダム選択
+                    const pick = all[Math.floor(Math.random() * all.length)];
+                    // 表示更新
+                    if (randomName) randomName.textContent = pick.title || 'レシピ';
+                    if (randomThumb) {
+                        // サムネイルがあれば img を差し替える簡易処理
+                        if (pick.thumbnail_url && pick.thumbnail_url.startsWith('http')) {
+                            randomThumb.innerHTML = `<img src="${escapeHtml(pick.thumbnail_url)}" alt="${escapeHtml(pick.title || '')}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;">`;
+                        } else {
+                            randomThumb.innerHTML = '<i class="ti ti-tools-kitchen-2" aria-hidden="true"></i>';
+                        }
+                    }
+                    if (randomBox) randomBox.style.display = 'block';
+
+                    // もう一度ボタン
+                    if (randomAgainBtn) {
+                        randomAgainBtn.onclick = () => {
+                            // 再度トリガーと同じ処理を呼ぶ
+                            randomTriggerBtn.onclick();
+                        };
+                    }
+
+                    // この献立に決定
+                    if (randomDecideBtn) {
+                        randomDecideBtn.onclick = async () => {
+                            if (!confirm(`この献立に決定しますか？\n${pick.title}`)) return;
+                            try {
+                                const mealType = sessionStorage.getItem('selectedMealType') || 'dinner';
+                                const up = await upsertMealPlan({ date, meal_type: mealType, recipe_id: pick.id });
+                                if (!up) {
+                                    alert('登録に失敗しました');
+                                    return;
+                                }
+                                await loadMealForSelectedDate();
+                                alert(`献立を登録しました: ${pick.title}`);
+                            } catch (err) {
+                                console.error('random decide error', err);
+                                alert('登録に失敗しました');
+                            }
+                        };
+                    }
+                } catch (err) {
+                    console.error('random propose error', err);
+                    alert('ランダム提案に失敗しました');
+                }
+            };
+        }
+
     } catch (err) {
         console.error('loadMealForSelectedDate exception:', err);
     }
 }
-
-// グローバルに公開して router.js から呼べるようにする
 window.loadMealForSelectedDate = loadMealForSelectedDate;
+
 // ------------------------------
 // ユーティリティ
 // ------------------------------

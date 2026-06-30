@@ -73,11 +73,39 @@ function showPage(hash) {
 // ページ固有の初期化処理
 function runPageInit(hash) {
 
+    // // 献立作成画面
+    // if (hash === "#/meal/create") {
+    //     const d = sessionStorage.getItem("selectedDate");
+    //     if (d) {
+    //         document.getElementById("meal-date").textContent = d;
+    //     }
+    // }
+
+    // 正規化して使う
+    const normalized = normalizeHash(hash);
+
     // 献立作成画面
-    if (hash === "#/meal/create") {
+    if (normalized === "#/meal/create") {
         const d = sessionStorage.getItem("selectedDate");
         if (d) {
-            document.getElementById("meal-date").textContent = d;
+            const el = document.getElementById("meal-date");
+            if (el) {
+                el.textContent = d;
+            } else {
+                setTimeout(() => {
+                    const el2 = document.getElementById("meal-date");
+                    if (el2) el2.textContent = d;
+                }, 50);
+            }
+        }
+
+        // 献立（meal_plans）を読み込んで画面に反映する（app.js 側で定義）
+        if (typeof window.loadMealForSelectedDate === "function") {
+            try {
+                window.loadMealForSelectedDate();
+            } catch (e) {
+                console.error("loadMealForSelectedDate threw:", e);
+            }
         }
     }
 

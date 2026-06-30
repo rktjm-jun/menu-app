@@ -199,3 +199,31 @@ export async function upsertMealPlan({ date, meal_type = 'dinner', recipe_id }) 
         return null;
     }
 }
+
+/**
+* 指定日付の meal_plan を取得（recipes を join して title を取得）
+* date は 'YYYY-MM-DD' 形式
+* 戻り値: { id, date, meal_type, recipe_id, recipes: { title, thumbnail_url } } または null
+*/
+export async function fetchMealPlanByDate(date) {
+    try {
+        if (!date) return null;
+        // recipes を join して title を取得
+        const url = new URL(`${SUPABASE_URL}/rest/v1/meal_plans`);
+        url.searchParams.set('select', '*,recipes(title,thumbnail_url)');
+        url.searchParams.set('date', `eq.${date}`);
+
+        const res = await fetch(url.toString(), { method: 'GET', headers });
+        if (!res.ok) {
+            const txt = await res.text().catch(() => null);
+            console.error('fetchMealPlanByDate error:', res.status, txt);
+            return null;
+        }
+        const data = await res.json().catch(() => null);
+        // 0 or 1 行の想定。複数ある場合は最初を返す
+        return Array.isArray(data) && data.length > 0 ? data[0] : null;
+    } catch (err) {
+        console.error('fetchMealPlanByDate exception:', err);
+        return null;
+    }
+}

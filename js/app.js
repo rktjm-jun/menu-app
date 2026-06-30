@@ -1,5 +1,5 @@
 
-import { createRecipe, getRecipes, getRecipeById, updateRecipe, upsertMealPlan } from "./api.js";
+import { createRecipe, getRecipes, getRecipeById, updateRecipe, upsertMealPlan, fetchMealPlanByDate } from "./api.js";
 
 // ------------------------------
 // 献立作成画面：閉じる処理
@@ -412,6 +412,85 @@ async function initRecipeSelectPage() {
 
 window.initRecipeSelectPage = initRecipeSelectPage;
 
+/* ------------------------------
+   新規追加: 選択日付の献立を読み込んで画面に反映する
+------------------------------ */
+async function loadMealForSelectedDate() {
+    try {
+        const date = sessionStorage.getItem("selectedDate");
+        if (!date) {
+            console.log("loadMealForSelectedDate: no selectedDate in sessionStorage");
+            // 非表示にする
+            const emptyText = document.getElementById('meal-create-empty-text');
+            const selectedBox = document.getElementById('meal-selected-recipe');
+            if (emptyText) emptyText.style.display = 'block';
+            if (selectedBox) selectedBox.style.display = 'none';
+            return;
+        }
+
+        // fetchMealPlanByDate は api.js で定義済み
+        const plan = await fetchMealPlanByDate(date);
+        console.log('loadMealForSelectedDate plan:', plan);
+
+        const emptyText = document.getElementById('meal-create-empty-text');
+        const selectedBox = document.getElementById('meal-selected-recipe');
+        const titleEl = document.getElementById('meal-selected-recipe-title');
+        const subEl = document.getElementById('meal-selected-recipe-sub');
+
+        if (!emptyText || !selectedBox || !titleEl) {
+            console.warn('loadMealForSelectedDate: required DOM missing');
+            return;
+        }
+
+        if (plan && plan.recipes) {
+            // 表示: レシピ名をセット
+            titleEl.textContent = plan.recipes.title || 'レシピ';
+            if (subEl) subEl.textContent = plan.recipes.thumbnail_url ? '写真あり' : 'レシピが登録されています';
+            emptyText.style.display = 'none';
+            selectedBox.style.display = 'block';
+        } else {
+            // 未決定表示
+            emptyText.style.display = 'block';
+            selectedBox.style.display = 'none';
+        }
+
+        // 変更ボタン（レシピ一覧へ）
+        const changeBtn = document.getElementById('meal-selected-change');
+        if (changeBtn) {
+            changeBtn.onclick = () => {
+                location.hash = '#/recipe/select';
+            };
+        }
+
+        // 削除ボタン（recipe_id を null にして upsert する簡易実装）
+        const clearBtn = document.getElementById('meal-selected-clear');
+        if (clearBtn) {
+            clearBtn.onclick = async () => {
+                if (!confirm('この日の献立を削除しますか？')) return;
+                try {
+                    // recipe_id を null にして upsert（DB の制約により動かない場合は DELETE 実装が必要）
+                    const mealType = sessionStorage.getItem('selectedMealType') || 'dinner';
+                    const res = await upsertMealPlan({ date, meal_type: mealType, recipe_id: null });
+                    if (!res) {
+                        alert('削除に失敗しました');
+                        return;
+                    }
+                    // 再読み込みして反映
+                    await loadMealForSelectedDate();
+                    alert('献立を削除しました');
+                } catch (err) {
+                    console.error('clear meal error', err);
+                    alert('削除に失敗しました');
+                }
+            };
+        }
+    } catch (err) {
+        console.error('loadMealForSelectedDate exception:', err);
+    }
+}
+
+// グローバルに公開して router.js から呼べるようにする
+window.loadMealForSelectedDate = loadMealForSelectedDate;
 // ------------------------------
 // ユーティリティ
 // ------------------------------

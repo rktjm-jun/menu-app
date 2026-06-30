@@ -245,32 +245,59 @@ body {
 .grid7 {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
+    gap: 6px; /* セル間の余白。必要に応じて調整 */
 }
 
+/* 各日セル */
 .daycell {
     border: 0.5px solid var(--color-border-tertiary);
     border-radius: 6px;
-    min-height: 46px;
-    padding: 3px 3px;
+    min-height: 72px; /* 行高さの目安。必要に応じて調整 */
+    padding: 6px; /* 内側余白を少し広めに */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-}
-
-.dnum {
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.dlabel {
-    font-size: 9px;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
+    gap: 6px;
+    background: var(--color-surface);
     overflow: hidden;
-    text-overflow: ellipsis;
 }
+
+/* 日付番号 */
+.dnum {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--color-text-primary);
+}
+
+/* レシピ名ラベル（折り返し） */
+.dlabel {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    white-space: normal; /* 折り返しを許可 */
+    word-break: break-word; /* 長い単語を折る */
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    max-height: 3.6em; /* 約3行分（1.2 * 3 = 3.6em） */
+    overflow: hidden; /* はみ出しは隠す */
+    text-overflow: ellipsis; /* 行数制限時に末尾を省略 */
+}
+
+    /* レシピがあるセルを強調する場合 */
+    .dlabel.has-meal {
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+
+/* 補完日（前月/次月）の見た目 */
+.daycell[style*="opacity:0.35"] {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    min-height: 40px;
+}
+
 
 /* ============================================================
    献立を決める（meal-create）

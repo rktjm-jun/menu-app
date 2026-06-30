@@ -1,3 +1,6 @@
+
+import { createRecipe, getRecipes, getRecipeById, updateRecipe, upsertMealPlan } from "./api.js";
+
 // ------------------------------
 // 献立作成画面：閉じる処理
 // ------------------------------
@@ -48,7 +51,7 @@ window.addEventListener("hashchange", () => {
 // ------------------------------
 // レシピ関連：Supabase 連携
 // ------------------------------
-import { createRecipe, getRecipes, getRecipeById, updateRecipe upsertMealPlan } from "./api.js";
+
 
 /**
  * ハッシュのクエリ部分をパースしてオブジェクトで返す

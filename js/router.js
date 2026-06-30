@@ -98,7 +98,7 @@ function runPageInit(hash) {
     }
 
     // レシピ選択画面
-    if (normalized === "#/recipe/select") {
+    if (hash === "#/recipe/select") {
         if (typeof window.initRecipeSelectPage === "function") {
             window.initRecipeSelectPage();
         }

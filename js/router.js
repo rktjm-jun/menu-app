@@ -131,6 +131,22 @@ function runPageInit(hash) {
             window.initRecipeSelectPage();
         }
     }
+
+    if (normalized === "#/calendar/month") {
+        // カレンダーを描画（SPA 内遷移時に確実に描画されるようにする）
+        if (typeof window.renderCalendar === "function") {
+            try {
+                window.renderCalendar();
+            } catch (e) {
+                console.error("renderCalendar threw:", e);
+            }
+        } else {
+            // フォールバック: 既存の renderCalendar がグローバルであれば呼ぶ
+            if (typeof renderCalendar === "function") {
+                try { renderCalendar(); } catch (e) { console.error(e); }
+            }
+        }
+    }
 }
 
 // ハッシュ変更時に発火

@@ -215,6 +215,11 @@ async function updateCalendarCellForDate(date) {
 window.updateCalendarCellForDate = updateCalendarCellForDate;
 window.populateMealsOnCalendar = populateMealsOnCalendar;
 
+// 追加: カレンダー描画とナビゲーションをグローバルに公開
+window.renderCalendar = renderCalendar;
+window.prevMonth = prevMonth;
+window.nextMonth = nextMonth;
+
 // 一覧画面（6週間＝42日）生成（既存の実装を維持しつつ meal_plans を反映）
 function renderCalendarList() {
     const container = document.getElementById("calendar-list-container");
